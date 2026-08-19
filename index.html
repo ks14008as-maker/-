@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="生理管理">
   <meta name="theme-color" content="#fff5f7">
 
-  <!-- ★ホーム画面追加用のアイコン画像（SVGを直接データ化して指定） -->
+  <!-- ホーム画面追加用のアイコン画像 -->
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ffe6eb'/><text y='68' x='50' font-size='55' text-anchor='middle'>🌸</text></svg>">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ffe6eb'/><text y='68' x='50' font-size='55' text-anchor='middle'>🌸</text></svg>">
 
@@ -20,11 +20,11 @@
     h1 { font-size: 1.2rem; color: #d86b88; text-align: center; margin-bottom: 20px; }
     .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(216,107,136,0.1); }
     .prediction { text-align: center; background: #ffe6eb; border: 1px solid #ffb3c1; }
-    .prediction .main-date { font-size: 1.4rem; font-weight: bold; color: #d86b88; margin: 8px 0; }
+    .prediction .main-date { font-size: 1.3rem; font-weight: bold; color: #d86b88; margin: 8px 0; }
     .prediction .range-date { font-size: 0.9rem; color: #555; }
     .prediction .stats-info { font-size: 0.8rem; color: #888; margin-top: 6px; border-top: 1px dashed #ffccd5; padding-top: 6px; }
-    label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
-    input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; }
+    label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px; }
+    input[type="date"] { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; background-color: #fff; -webkit-appearance: none; }
     
     .tab-group { display: flex; border-bottom: 2px solid #ffe6eb; margin-bottom: 16px; }
     .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-size: 0.95rem; font-weight: bold; color: #888; cursor: pointer; text-align: center; }
@@ -34,10 +34,10 @@
     .date-row > div { flex: 1; }
 
     .symptom-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-    .symptom-chip { padding: 6px 12px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 20px; font-size: 0.85rem; cursor: pointer; user-select: none; }
+    .symptom-chip { padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 20px; font-size: 0.85rem; cursor: pointer; user-select: none; }
     .symptom-chip.selected { background: #ffd6e0; border-color: #d86b88; color: #d86b88; font-weight: bold; }
 
-    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 12px; touch-action: manipulation; }
     .btn-primary { background: #d86b88; color: white; }
     .btn-pms { background: #ab6bd8; color: white; }
     .btn-line { background: #06C755; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -45,7 +45,7 @@
     .btn-print { background: #6c757d; color: white; margin-top: 8px; }
     
     .filter-group { display: flex; gap: 8px; margin-bottom: 12px; }
-    .filter-btn { flex: 1; padding: 6px; border: 1px solid #d86b88; background: white; color: #d86b88; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .filter-btn { flex: 1; padding: 8px; border: 1px solid #d86b88; background: white; color: #d86b88; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
     .filter-btn.active { background: #d86b88; color: white; }
     
     ul { list-style: none; padding: 0; margin: 0; }
@@ -53,7 +53,9 @@
     .li-header { display: flex; justify-content: space-between; align-items: center; }
     .symptom-tags { margin-top: 4px; font-size: 0.85rem; color: #8a33cc; font-weight: 500; }
     .pms-badge { display: inline-block; background: #f2e6ff; color: #8a33cc; border: 1px solid #d8b3ff; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; }
-    .delete-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.1rem; }
+    .delete-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; padding: 4px 8px; }
+
+    .no-data { text-align: center; color: #999; padding: 20px 0; font-size: 0.9rem; }
 
     @media print {
       body { background: white; max-width: 100%; padding: 0; color: #000; }
@@ -69,6 +71,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <h1>生理周期＆体調管理</h1>
@@ -83,23 +86,23 @@
 
   <!-- 共有・連携ボタン群 -->
   <div class="card no-print" style="padding: 12px;">
-    <button class="btn btn-line" onclick="shareToLine()">LINEで奥様に共有する</button>
-    <button class="btn btn-cal" onclick="addToGoogleCalendar()">Googleカレンダーに予測を登録</button>
-    <button class="btn btn-print" onclick="window.print()">病院提示用にPDF/印刷表示</button>
+    <button type="button" class="btn btn-line" onclick="shareToLine()">LINEで奥様に共有する</button>
+    <button type="button" class="btn btn-cal" onclick="addToGoogleCalendar()">Googleカレンダーに予測を登録</button>
+    <button type="button" class="btn btn-print" onclick="window.print()">病院提示用にPDF/印刷表示</button>
   </div>
 
   <!-- 記録フォーム -->
   <div class="card no-print">
     <div class="tab-group">
-      <button class="tab-btn active" onclick="switchTab('period', this)">🌸 生理開始日</button>
-      <button class="tab-btn" onclick="switchTab('pms', this)">🌙 生理前の不調(PMS)</button>
+      <button type="button" class="tab-btn active" onclick="switchTab('period', this)">🌸 生理開始日</button>
+      <button type="button" class="tab-btn" onclick="switchTab('pms', this)">🌙 生理前の不調(PMS)</button>
     </div>
 
     <!-- 生理記録タブ -->
     <div id="tabPeriod">
       <label for="startDate">生理開始日</label>
       <input type="date" id="startDate">
-      <button class="btn btn-primary" onclick="addPeriodRecord()">生理日を保存する</button>
+      <button type="button" class="btn btn-primary" onclick="addPeriodRecord()">生理日を保存する</button>
     </div>
 
     <!-- 生理前不調記録タブ -->
@@ -126,7 +129,7 @@
         <span class="symptom-chip" onclick="toggleSymptom(this)">🥱 強い眠気</span>
       </div>
 
-      <button class="btn btn-pms" onclick="addPmsRecord()">生理前不調を保存する</button>
+      <button type="button" class="btn btn-pms" onclick="addPmsRecord()">生理前不調を保存する</button>
     </div>
   </div>
 
@@ -135,9 +138,9 @@
     <h3 style="margin-top:0; font-size:1rem; color:#d86b88;">過去の履歴・不調ログ（時系列）</h3>
     
     <div class="filter-group no-print">
-      <button class="filter-btn active" onclick="setFilter(3, this)">直近3ヶ月</button>
-      <button class="filter-btn" onclick="setFilter(6, this)">直近6ヶ月</button>
-      <button class="filter-btn" onclick="setFilter(0, this)">全期間</button>
+      <button type="button" class="filter-btn active" onclick="setFilter(3, this)">直近3ヶ月</button>
+      <button type="button" class="filter-btn" onclick="setFilter(6, this)">直近6ヶ月</button>
+      <button type="button" class="filter-btn" onclick="setFilter(0, this)">全期間</button>
     </div>
 
     <ul id="historyList"></ul>
@@ -146,13 +149,25 @@
   <script>
     let currentFilterMonths = 3;
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date();
-      document.getElementById('startDate').valueAsDate = today;
-      document.getElementById('pmsStart').valueAsDate = today;
-      document.getElementById('pmsEnd').valueAsDate = today;
+    window.addEventListener("DOMContentLoaded", () => {
+      initDates();
       updateDisplay();
     });
+
+    function initDates() {
+      const todayStr = getTodayString();
+      document.getElementById('startDate').value = todayStr;
+      document.getElementById('pmsStart').value = todayStr;
+      document.getElementById('pmsEnd').value = todayStr;
+    }
+
+    function getTodayString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
 
     function switchTab(tab, btn) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -167,16 +182,27 @@
     }
 
     function getPeriodRecords() {
-      return JSON.parse(localStorage.getItem('periodRecordsFull') || '[]');
+      try {
+        return JSON.parse(localStorage.getItem('periodRecordsFull') || '[]');
+      } catch (e) {
+        return [];
+      }
     }
 
     function getPmsRecords() {
-      return JSON.parse(localStorage.getItem('pmsRecordsFull') || '[]');
+      try {
+        return JSON.parse(localStorage.getItem('pmsRecordsFull') || '[]');
+      } catch (e) {
+        return [];
+      }
     }
 
     function addPeriodRecord() {
       const dateInput = document.getElementById('startDate').value;
-      if (!dateInput) return alert('日付を選択してください');
+      if (!dateInput) {
+        alert('日付を選択してください');
+        return;
+      }
 
       let records = getPeriodRecords();
       if (!records.some(r => r.date === dateInput)) {
@@ -184,14 +210,22 @@
         records.sort((a, b) => new Date(a.date) - new Date(b.date));
         localStorage.setItem('periodRecordsFull', JSON.stringify(records));
       }
+
+      alert(`生理日 (${dateInput}) を保存しました！`);
       updateDisplay();
     }
 
     function addPmsRecord() {
       const startDate = document.getElementById('pmsStart').value;
       const endDate = document.getElementById('pmsEnd').value;
-      if (!startDate || !endDate) return alert('開始日と終了日を選択してください');
-      if (new Date(startDate) > new Date(endDate)) return alert('終了日は開始日以降に設定してください');
+      if (!startDate || !endDate) {
+        alert('開始日と終了日を選択してください');
+        return;
+      }
+      if (new Date(startDate) > new Date(endDate)) {
+        alert('終了日は開始日以降に設定してください');
+        return;
+      }
 
       const selectedSymptoms = [];
       document.querySelectorAll('.symptom-chip.selected').forEach(chip => {
@@ -204,6 +238,7 @@
       localStorage.setItem('pmsRecordsFull', JSON.stringify(pmsRecords));
 
       document.querySelectorAll('.symptom-chip').forEach(c => c.classList.remove('selected'));
+      alert('生理前の不調記録を保存しました！');
       updateDisplay();
     }
 
@@ -272,7 +307,7 @@
         const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
 
         document.getElementById('predictedDate').innerText = `次回予測（本命）：${fmt(pred.bestEst)} 頃`;
-        document.getElementById('predictedRange').innerText = `ありそうな期間：${fmt(pred.minEst)} 〜 ${fmt(maxEst)}`;
+        document.getElementById('predictedRange').innerText = `ありそうな期間：${fmt(pred.minEst)} 〜 ${fmt(pred.maxEst)}`;
         
         document.getElementById('statsInfo').innerText = pred.isCustomStats 
           ? `過去実績より算出：平均周期 ${pred.avgCycle}日（変動幅: ${pred.minCycle}〜${pred.maxCycle}日）`
@@ -286,6 +321,7 @@
       combined.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       const now = new Date();
+      let renderedCount = 0;
 
       combined.forEach(item => {
         const currDate = new Date(item.date);
@@ -296,6 +332,7 @@
           if (currDate < limitDate) return;
         }
 
+        renderedCount++;
         const li = document.createElement('li');
 
         if (item.type === 'period') {
@@ -310,7 +347,7 @@
           li.innerHTML = `
             <div class="li-header">
               <span>🌸 <strong>生理開始：${item.date}</strong> <small style="color:#555">${cycleText}</small></span>
-              <button class="delete-btn no-print" onclick="deletePeriod('${item.date}')">✕</button>
+              <button type="button" class="delete-btn no-print" onclick="deletePeriod('${item.date}')">✕</button>
             </div>
           `;
         } else if (item.type === 'pms') {
@@ -327,7 +364,7 @@
             <div class="pms-badge">🌙 生理前不調 (PMS/PMDD) ${durationDays}日間</div>
             <div class="li-header">
               <span><strong>${pms.startDate} 〜 ${pms.endDate}</strong></span>
-              <button class="delete-btn no-print" onclick="deletePms(${pms.id})">✕</button>
+              <button type="button" class="delete-btn no-print" onclick="deletePms(${pms.id})">✕</button>
             </div>
             ${symptomText}
           `;
@@ -335,6 +372,10 @@
 
         listEl.appendChild(li);
       });
+
+      if (renderedCount === 0) {
+        listEl.innerHTML = '<li class="no-data">記録されたデータがありません</li>';
+      }
     }
 
     function addToGoogleCalendar() {
