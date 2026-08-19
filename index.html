@@ -44,8 +44,8 @@
     .btn-cal { background: #4285F4; color: white; margin-top: 8px; }
     .btn-print { background: #6c757d; color: white; margin-top: 8px; }
     
-    .filter-group { display: flex; gap: 8px; margin-bottom: 12px; }
-    .filter-btn { flex: 1; padding: 8px; border: 1px solid #d86b88; background: white; color: #d86b88; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .filter-group { display: flex; gap: 6px; margin-bottom: 12px; }
+    .filter-btn { flex: 1; padding: 8px 4px; border: 1px solid #d86b88; background: white; color: #d86b88; border-radius: 6px; cursor: pointer; font-size: 0.8rem; text-align: center; }
     .filter-btn.active { background: #d86b88; color: white; }
     
     ul { list-style: none; padding: 0; margin: 0; }
@@ -62,12 +62,13 @@
       .no-print, .filter-group, .delete-btn { display: none !important; }
       .card { box-shadow: none; border: 1px solid #aaa; margin-bottom: 12px; page-break-inside: avoid; }
       h1 { text-align: left; font-size: 1.4rem; color: #000; border-bottom: 2px solid #000; padding-bottom: 6px; }
-      h1::after { content: " （婦人科 提出用レポート）"; font-size: 1rem; font-weight: normal; }
+      h1::after { content: " （婦人科 提出用レポート・過去1年間）"; font-size: 1rem; font-weight: normal; }
       .prediction { background: #f9f9f9; border: 1px solid #ccc; text-align: left; padding: 12px; }
       .prediction .main-date { color: #000; font-size: 1.1rem; margin: 4px 0; }
       .prediction .stats-info { color: #333; border-top: 1px solid #ccc; margin-top: 4px; padding-top: 4px; }
       .pms-badge { background: #eee; color: #000; border: 1px solid #888; }
       li { border-bottom: 1px solid #ccc; }
+      li.print-hidden { display: list-item !important; }
     }
   </style>
 </head>
@@ -88,7 +89,7 @@
   <div class="card no-print" style="padding: 12px;">
     <button type="button" class="btn btn-line" onclick="shareToLine()">LINEで奥様に共有する</button>
     <button type="button" class="btn btn-cal" onclick="addToGoogleCalendar()">Googleカレンダーに予測を登録</button>
-    <button type="button" class="btn btn-print" onclick="window.print()">病院提示用にPDF/印刷表示</button>
+    <button type="button" class="btn btn-print" onclick="printReport()">病院提示用にPDF/印刷表示</button>
   </div>
 
   <!-- 記録フォーム -->
@@ -140,6 +141,7 @@
     <div class="filter-group no-print">
       <button type="button" class="filter-btn active" onclick="setFilter(3, this)">直近3ヶ月</button>
       <button type="button" class="filter-btn" onclick="setFilter(6, this)">直近6ヶ月</button>
+      <button type="button" class="filter-btn" onclick="setFilter(12, this)">直近1年</button>
       <button type="button" class="filter-btn" onclick="setFilter(0, this)">全期間</button>
     </div>
 
@@ -199,10 +201,7 @@
 
     function addPeriodRecord() {
       const dateInput = document.getElementById('startDate').value;
-      if (!dateInput) {
-        alert('日付を選択してください');
-        return;
-      }
+      if (!dateInput) return;
 
       let records = getPeriodRecords();
       if (!records.some(r => r.date === dateInput)) {
@@ -211,21 +210,14 @@
         localStorage.setItem('periodRecordsFull', JSON.stringify(records));
       }
 
-      alert(`生理日 (${dateInput}) を保存しました！`);
       updateDisplay();
     }
 
     function addPmsRecord() {
       const startDate = document.getElementById('pmsStart').value;
       const endDate = document.getElementById('pmsEnd').value;
-      if (!startDate || !endDate) {
-        alert('開始日と終了日を選択してください');
-        return;
-      }
-      if (new Date(startDate) > new Date(endDate)) {
-        alert('終了日は開始日以降に設定してください');
-        return;
-      }
+      if (!startDate || !endDate) return;
+      if (new Date(startDate) > new Date(endDate)) return;
 
       const selectedSymptoms = [];
       document.querySelectorAll('.symptom-chip.selected').forEach(chip => {
@@ -238,7 +230,6 @@
       localStorage.setItem('pmsRecordsFull', JSON.stringify(pmsRecords));
 
       document.querySelectorAll('.symptom-chip').forEach(c => c.classList.remove('selected'));
-      alert('生理前の不調記録を保存しました！');
       updateDisplay();
     }
 
@@ -259,7 +250,7 @@
     function setFilter(months, btnElement) {
       currentFilterMonths = months;
       document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      btnElement.classList.add('active');
+      if (btnElement) btnElement.classList.add('active');
       updateDisplay();
     }
 
@@ -323,17 +314,28 @@
       const now = new Date();
       let renderedCount = 0;
 
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+
       combined.forEach(item => {
         const currDate = new Date(item.date);
 
+        if (currDate < oneYearAgo) return;
+
+        let isFilterMatch = true;
         if (currentFilterMonths > 0) {
           const limitDate = new Date();
           limitDate.setMonth(now.getMonth() - currentFilterMonths);
-          if (currDate < limitDate) return;
+          if (currDate < limitDate) isFilterMatch = false;
         }
 
-        renderedCount++;
+        if (isFilterMatch) renderedCount++;
+
         const li = document.createElement('li');
+        if (!isFilterMatch) {
+          li.classList.add('print-hidden');
+          li.style.display = 'none';
+        }
 
         if (item.type === 'period') {
           const originalIndex = periodRecords.findIndex(r => r.date === item.date);
@@ -373,14 +375,18 @@
         listEl.appendChild(li);
       });
 
-      if (renderedCount === 0) {
+      if (renderedCount === 0 && listEl.children.length === 0) {
         listEl.innerHTML = '<li class="no-data">記録されたデータがありません</li>';
       }
     }
 
+    function printReport() {
+      window.print();
+    }
+
     function addToGoogleCalendar() {
       const pred = calculatePrediction();
-      if (!pred) return alert('過去の記録がないためカレンダーに登録できません。');
+      if (!pred) return;
 
       const formatDateForCal = (d) => {
         const y = d.getFullYear();
@@ -405,7 +411,7 @@
 
     function shareToLine() {
       const pred = calculatePrediction();
-      if (!pred) return alert('共有するデータがありません。');
+      if (!pred) return;
 
       const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
       const text = `次回生理の予想共有だよ！\n\n【一番高確率】${fmt(pred.bestEst)} 頃\n【予定範囲】${fmt(pred.minEst)} 〜 ${fmt(pred.maxEst)}\n\n無理せず体調第一で過ごしてね！`;
