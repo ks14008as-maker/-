@@ -2,10 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>生理周期＆体調管理アプリ</title>
+  
+  <!-- アプリ化（PWA）用の設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="pink-translucent">
+  <meta name="apple-mobile-web-app-title" content="生理管理">
+  <meta name="theme-color" content="#fff5f7">
+
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background-color: #fff5f7; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background-color: #fff5f7; color: #333; -webkit-tap-highlight-color: transparent; }
     h1 { font-size: 1.2rem; color: #d86b88; text-align: center; margin-bottom: 20px; }
     .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(216,107,136,0.1); }
     .prediction { text-align: center; background: #ffe6eb; border: 1px solid #ffb3c1; }
@@ -217,7 +224,6 @@
       updateDisplay();
     }
 
-    // 次回予測ロジック
     function calculatePrediction() {
       const periodRecords = getPeriodRecords();
       if (periodRecords.length === 0) return null;
@@ -327,12 +333,10 @@
       });
     }
 
-    // Googleカレンダー登録機能
     function addToGoogleCalendar() {
       const pred = calculatePrediction();
       if (!pred) return alert('過去の記録がないためカレンダーに登録できません。');
 
-      // 1日終日イベントとしてフォーマット (YYYYMMDD)
       const formatDateForCal = (d) => {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -341,8 +345,6 @@
       };
 
       const startDateStr = formatDateForCal(pred.minEst);
-      
-      // 終了日は終日イベントの仕様上、翌日にセット
       const nextDayOfMax = new Date(pred.maxEst);
       nextDayOfMax.setDate(nextDayOfMax.getDate() + 1);
       const endDateStr = formatDateForCal(nextDayOfMax);
@@ -351,7 +353,6 @@
       const title = encodeURIComponent("🌸 生理予想期間");
       const details = encodeURIComponent(`本命予想日：${fmt(pred.bestEst)}頃\nありそうな期間：${fmt(pred.minEst)} 〜 ${fmt(pred.maxEst)}`);
 
-      // Google Calendar 登録用URLの生成
       const calUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateStr}/${endDateStr}&details=${details}`;
       
       window.open(calUrl, '_blank');
