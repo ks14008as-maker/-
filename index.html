@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生理周期＆体調管理アプリ</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; background-color: #fff5f7; color: #333; }
+    h1 { font-size: 1.2rem; color: #d86b88; text-align: center; margin-bottom: 20px; }
+    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(216,107,136,0.1); }
+    .prediction { text-align: center; background: #ffe6eb; border: 1px solid #ffb3c1; }
+    .prediction .main-date { font-size: 1.4rem; font-weight: bold; color: #d86b88; margin: 8px 0; }
+    .prediction .range-date { font-size: 0.9rem; color: #555; }
+    .prediction .stats-info { font-size: 0.8rem; color: #888; margin-top: 6px; border-top: 1px dashed #ffccd5; padding-top: 6px; }
+    label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
+    input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; }
+    
+    .tab-group { display: flex; border-bottom: 2px solid #ffe6eb; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-size: 0.95rem; font-weight: bold; color: #888; cursor: pointer; text-align: center; }
+    .tab-btn.active { color: #d86b88; border-bottom: 3px solid #d86b88; }
+
+    .date-row { display: flex; gap: 8px; }
+    .date-row > div { flex: 1; }
+
+    .symptom-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .symptom-chip { padding: 6px 12px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 20px; font-size: 0.85rem; cursor: pointer; user-select: none; }
+    .symptom-chip.selected { background: #ffd6e0; border-color: #d86b88; color: #d86b88; font-weight: bold; }
+
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn-primary { background: #d86b88; color: white; }
+    .btn-pms { background: #ab6bd8; color: white; }
+    .btn-line { background: #06C755; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-cal { background: #4285F4; color: white; margin-top: 8px; }
+    .btn-print { background: #6c757d; color: white; margin-top: 8px; }
+    
+    .filter-group { display: flex; gap: 8px; margin-bottom: 12px; }
+    .filter-btn { flex: 1; padding: 6px; border: 1px solid #d86b88; background: white; color: #d86b88; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .filter-btn.active { background: #d86b88; color: white; }
+    
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 12px 0; border-bottom: 1px solid #ffe6eb; font-size: 0.9rem; }
+    .li-header { display: flex; justify-content: space-between; align-items: center; }
+    .symptom-tags { margin-top: 4px; font-size: 0.85rem; color: #8a33cc; font-weight: 500; }
+    .pms-badge { display: inline-block; background: #f2e6ff; color: #8a33cc; border: 1px solid #d8b3ff; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; }
+    .delete-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.1rem; }
+
+    @media print {
+      body { background: white; max-width: 100%; padding: 0; color: #000; }
+      .no-print, .filter-group, .delete-btn { display: none !important; }
+      .card { box-shadow: none; border: 1px solid #aaa; margin-bottom: 12px; page-break-inside: avoid; }
+      h1 { text-align: left; font-size: 1.4rem; color: #000; border-bottom: 2px solid #000; padding-bottom: 6px; }
+      h1::after { content: " （婦人科 提出用レポート）"; font-size: 1rem; font-weight: normal; }
+      .prediction { background: #f9f9f9; border: 1px solid #ccc; text-align: left; padding: 12px; }
+      .prediction .main-date { color: #000; font-size: 1.1rem; margin: 4px 0; }
+      .prediction .stats-info { color: #333; border-top: 1px solid #ccc; margin-top: 4px; padding-top: 4px; }
+      .pms-badge { background: #eee; color: #000; border: 1px solid #888; }
+      li { border-bottom: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>生理周期＆体調管理</h1>
+
+  <!-- 次回予測＆周期傾向サマリー -->
+  <div class="card prediction">
+    <div style="font-size:0.85rem; font-weight:bold; color:#666;">次回予測・周期傾向</div>
+    <div id="predictedDate" class="main-date">データが足りません</div>
+    <div id="predictedRange" class="range-date">過去の記録を登録してください</div>
+    <div id="statsInfo" class="stats-info">学習データ：初期設定 (30〜46日/本命40日)</div>
+  </div>
+
+  <!-- 共有・連携ボタン群 -->
+  <div class="card no-print" style="padding: 12px;">
+    <button class="btn btn-line" onclick="shareToLine()">LINEで奥様に共有する</button>
+    <button class="btn btn-cal" onclick="addToGoogleCalendar()">Googleカレンダーに予測を登録</button>
+    <button class="btn btn-print" onclick="window.print()">病院提示用にPDF/印刷表示</button>
+  </div>
+
+  <!-- 記録フォーム -->
+  <div class="card no-print">
+    <div class="tab-group">
+      <button class="tab-btn active" onclick="switchTab('period', this)">🌸 生理開始日</button>
+      <button class="tab-btn" onclick="switchTab('pms', this)">🌙 生理前の不調(PMS)</button>
+    </div>
+
+    <!-- 生理記録タブ -->
+    <div id="tabPeriod">
+      <label for="startDate">生理開始日</label>
+      <input type="date" id="startDate">
+      <button class="btn btn-primary" onclick="addPeriodRecord()">生理日を保存する</button>
+    </div>
+
+    <!-- 生理前不調記録タブ -->
+    <div id="tabPms" style="display: none;">
+      <div class="date-row">
+        <div>
+          <label for="pmsStart">不調の開始日</label>
+          <input type="date" id="pmsStart">
+        </div>
+        <div>
+          <label for="pmsEnd">不調の終了日</label>
+          <input type="date" id="pmsEnd">
+        </div>
+      </div>
+
+      <label style="margin-top: 12px;">体調・症状（ワンタップ選択）</label>
+      <div class="symptom-group" id="symptomContainer">
+        <span class="symptom-chip" onclick="toggleSymptom(this)">😖 腹痛</span>
+        <span class="symptom-chip" onclick="toggleSymptom(this)">🤕 頭痛</span>
+        <span class="symptom-chip" onclick="toggleSymptom(this)">😤 イライラ</span>
+        <span class="symptom-chip" onclick="toggleSymptom(this)">😣 腰痛</span>
+        <span class="symptom-chip" onclick="toggleSymptom(this)">🧴 肌荒れ</span>
+        <span class="symptom-chip" onclick="toggleSymptom(this)">⚠️ 不正出血</span>
+        <span class="symptom-chip" onclick="toggleSymptom(this)">🥱 強い眠気</span>
+      </div>
+
+      <button class="btn btn-pms" onclick="addPmsRecord()">生理前不調を保存する</button>
+    </div>
+  </div>
+
+  <!-- 統合履歴表示 -->
+  <div class="card">
+    <h3 style="margin-top:0; font-size:1rem; color:#d86b88;">過去の履歴・不調ログ（時系列）</h3>
+    
+    <div class="filter-group no-print">
+      <button class="filter-btn active" onclick="setFilter(3, this)">直近3ヶ月</button>
+      <button class="filter-btn" onclick="setFilter(6, this)">直近6ヶ月</button>
+      <button class="filter-btn" onclick="setFilter(0, this)">全期間</button>
+    </div>
+
+    <ul id="historyList"></ul>
+  </div>
+
+  <script>
+    let currentFilterMonths = 3;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date();
+      document.getElementById('startDate').valueAsDate = today;
+      document.getElementById('pmsStart').valueAsDate = today;
+      document.getElementById('pmsEnd').valueAsDate = today;
+      updateDisplay();
+    });
+
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      document.getElementById('tabPeriod').style.display = (tab === 'period') ? 'block' : 'none';
+      document.getElementById('tabPms').style.display = (tab === 'pms') ? 'block' : 'none';
+    }
+
+    function toggleSymptom(el) {
+      el.classList.toggle('selected');
+    }
+
+    function getPeriodRecords() {
+      return JSON.parse(localStorage.getItem('periodRecordsFull') || '[]');
+    }
+
+    function getPmsRecords() {
+      return JSON.parse(localStorage.getItem('pmsRecordsFull') || '[]');
+    }
+
+    function addPeriodRecord() {
+      const dateInput = document.getElementById('startDate').value;
+      if (!dateInput) return alert('日付を選択してください');
+
+      let records = getPeriodRecords();
+      if (!records.some(r => r.date === dateInput)) {
+        records.push({ date: dateInput });
+        records.sort((a, b) => new Date(a.date) - new Date(b.date));
+        localStorage.setItem('periodRecordsFull', JSON.stringify(records));
+      }
+      updateDisplay();
+    }
+
+    function addPmsRecord() {
+      const startDate = document.getElementById('pmsStart').value;
+      const endDate = document.getElementById('pmsEnd').value;
+      if (!startDate || !endDate) return alert('開始日と終了日を選択してください');
+      if (new Date(startDate) > new Date(endDate)) return alert('終了日は開始日以降に設定してください');
+
+      const selectedSymptoms = [];
+      document.querySelectorAll('.symptom-chip.selected').forEach(chip => {
+        selectedSymptoms.push(chip.innerText);
+      });
+
+      let pmsRecords = getPmsRecords();
+      pmsRecords.push({ id: Date.now(), startDate, endDate, symptoms: selectedSymptoms });
+      pmsRecords.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+      localStorage.setItem('pmsRecordsFull', JSON.stringify(pmsRecords));
+
+      document.querySelectorAll('.symptom-chip').forEach(c => c.classList.remove('selected'));
+      updateDisplay();
+    }
+
+    function deletePeriod(dateToDelete) {
+      if (!confirm(`${dateToDelete} の生理記録を削除しますか？`)) return;
+      let records = getPeriodRecords().filter(r => r.date !== dateToDelete);
+      localStorage.setItem('periodRecordsFull', JSON.stringify(records));
+      updateDisplay();
+    }
+
+    function deletePms(idToDelete) {
+      if (!confirm(`この生理前不調の記録を削除しますか？`)) return;
+      let records = getPmsRecords().filter(r => r.id !== idToDelete);
+      localStorage.setItem('pmsRecordsFull', JSON.stringify(records));
+      updateDisplay();
+    }
+
+    function setFilter(months, btnElement) {
+      currentFilterMonths = months;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      btnElement.classList.add('active');
+      updateDisplay();
+    }
+
+    // 次回予測ロジック
+    function calculatePrediction() {
+      const periodRecords = getPeriodRecords();
+      if (periodRecords.length === 0) return null;
+
+      const cycles = [];
+      for (let i = 1; i < periodRecords.length; i++) {
+        const prev = new Date(periodRecords[i - 1].date);
+        const curr = new Date(periodRecords[i].date);
+        cycles.push(Math.round((curr - prev) / (1000 * 60 * 60 * 24)));
+      }
+
+      let avgCycle = 40, minCycle = 30, maxCycle = 46, isCustomStats = false;
+      if (cycles.length >= 2) {
+        const recent = cycles.slice(-6);
+        avgCycle = Math.round(recent.reduce((a, b) => a + b, 0) / recent.length);
+        minCycle = Math.min(...recent);
+        maxCycle = Math.max(...recent);
+        isCustomStats = true;
+      }
+
+      const lastDate = new Date(periodRecords[periodRecords.length - 1].date);
+      const bestEst = new Date(lastDate); bestEst.setDate(bestEst.getDate() + avgCycle);
+      const minEst = new Date(lastDate); minEst.setDate(minEst.getDate() + minCycle);
+      const maxEst = new Date(lastDate); maxEst.setDate(maxEst.getDate() + maxCycle);
+
+      return { bestEst, minEst, maxEst, avgCycle, minCycle, maxCycle, isCustomStats };
+    }
+
+    function updateDisplay() {
+      const periodRecords = getPeriodRecords();
+      const pmsRecords = getPmsRecords();
+      const listEl = document.getElementById('historyList');
+      listEl.innerHTML = '';
+
+      const pred = calculatePrediction();
+
+      if (!pred) {
+        document.getElementById('predictedDate').innerText = 'データが足りません';
+        document.getElementById('predictedRange').innerText = '過去の生理日を登録してください';
+        document.getElementById('statsInfo').innerText = 'データなし';
+      } else {
+        const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+
+        document.getElementById('predictedDate').innerText = `次回予測（本命）：${fmt(pred.bestEst)} 頃`;
+        document.getElementById('predictedRange').innerText = `ありそうな期間：${fmt(pred.minEst)} 〜 ${fmt(maxEst)}`;
+        
+        document.getElementById('statsInfo').innerText = pred.isCustomStats 
+          ? `過去実績より算出：平均周期 ${pred.avgCycle}日（変動幅: ${pred.minCycle}〜${pred.maxCycle}日）`
+          : `初期設定（30〜46日/本命40日）で予測中（蓄積により自動更新）`;
+      }
+
+      const combined = [];
+      periodRecords.forEach(p => combined.push({ type: 'period', date: p.date, raw: p }));
+      pmsRecords.forEach(p => combined.push({ type: 'pms', date: p.startDate, raw: p }));
+      
+      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const now = new Date();
+
+      combined.forEach(item => {
+        const currDate = new Date(item.date);
+
+        if (currentFilterMonths > 0) {
+          const limitDate = new Date();
+          limitDate.setMonth(now.getMonth() - currentFilterMonths);
+          if (currDate < limitDate) return;
+        }
+
+        const li = document.createElement('li');
+
+        if (item.type === 'period') {
+          const originalIndex = periodRecords.findIndex(r => r.date === item.date);
+          let cycleText = '';
+          if (originalIndex > 0) {
+            const prevDate = new Date(periodRecords[originalIndex - 1].date);
+            const diffDays = Math.round((currDate - prevDate) / (1000 * 60 * 60 * 24));
+            cycleText = `（前回からの周期: ${diffDays}日）`;
+          }
+
+          li.innerHTML = `
+            <div class="li-header">
+              <span>🌸 <strong>生理開始：${item.date}</strong> <small style="color:#555">${cycleText}</small></span>
+              <button class="delete-btn no-print" onclick="deletePeriod('${item.date}')">✕</button>
+            </div>
+          `;
+        } else if (item.type === 'pms') {
+          const pms = item.raw;
+          const symptomText = pms.symptoms && pms.symptoms.length > 0 
+            ? `<div class="symptom-tags">主訴・症状: ${pms.symptoms.join(' / ')}</div>` 
+            : '';
+
+          const s = new Date(pms.startDate);
+          const e = new Date(pms.endDate);
+          const durationDays = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+
+          li.innerHTML = `
+            <div class="pms-badge">🌙 生理前不調 (PMS/PMDD) ${durationDays}日間</div>
+            <div class="li-header">
+              <span><strong>${pms.startDate} 〜 ${pms.endDate}</strong></span>
+              <button class="delete-btn no-print" onclick="deletePms(${pms.id})">✕</button>
+            </div>
+            ${symptomText}
+          `;
+        }
+
+        listEl.appendChild(li);
+      });
+    }
+
+    // Googleカレンダー登録機能
+    function addToGoogleCalendar() {
+      const pred = calculatePrediction();
+      if (!pred) return alert('過去の記録がないためカレンダーに登録できません。');
+
+      // 1日終日イベントとしてフォーマット (YYYYMMDD)
+      const formatDateForCal = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}${m}${day}`;
+      };
+
+      const startDateStr = formatDateForCal(pred.minEst);
+      
+      // 終了日は終日イベントの仕様上、翌日にセット
+      const nextDayOfMax = new Date(pred.maxEst);
+      nextDayOfMax.setDate(nextDayOfMax.getDate() + 1);
+      const endDateStr = formatDateForCal(nextDayOfMax);
+
+      const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+      const title = encodeURIComponent("🌸 生理予想期間");
+      const details = encodeURIComponent(`本命予想日：${fmt(pred.bestEst)}頃\nありそうな期間：${fmt(pred.minEst)} 〜 ${fmt(pred.maxEst)}`);
+
+      // Google Calendar 登録用URLの生成
+      const calUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateStr}/${endDateStr}&details=${details}`;
+      
+      window.open(calUrl, '_blank');
+    }
+
+    function shareToLine() {
+      const pred = calculatePrediction();
+      if (!pred) return alert('共有するデータがありません。');
+
+      const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+      const text = `次回生理の予想共有だよ！\n\n【一番高確率】${fmt(pred.bestEst)} 頃\n【予定範囲】${fmt(pred.minEst)} 〜 ${fmt(pred.maxEst)}\n\n無理せず体調第一で過ごしてね！`;
+      
+      const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+      window.open(lineUrl, '_blank');
+    }
+  </script>
+</body>
+</html>
